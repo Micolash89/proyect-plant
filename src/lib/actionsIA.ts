@@ -1,3 +1,4 @@
+"use server"
 import { config } from "@/config/config";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
@@ -39,7 +40,7 @@ import { GoogleAIFileManager } from '@google/generative-ai/server';
     responseMimeType: "text/plain",
   };
   
-  async function run() {
+ export async function run() {
     const files = [
       await uploadToGemini("", "image/jpeg"),
     ];
@@ -75,7 +76,6 @@ import { GoogleAIFileManager } from '@google/generative-ai/server';
     console.log(result.response.text());
   }
   
-  run();
 
   /*importar archivos locales en base de 64*/
 
@@ -88,7 +88,7 @@ if (!apiKey) {
 }
 
 
-async function runIa2() {
+export async function runIa2() {
   const imagePath = "path/to/your/image.jpg"; // Reemplaza con la ruta real a tu imagen
 
   // Convierte el archivo de imagen local a Base64
@@ -109,4 +109,37 @@ async function runIa2() {
   console.log(result.response.text());
 }
 
-runIa2();
+export async function analyzeImage(formData: FormData) {
+  try {
+    const prompt = formData.get('prompt') as string;
+    const imageFile = formData.get('image') as File;
+    
+    if (!imageFile || !prompt) {
+      throw new Error('Se requiere una imagen y un prompt');
+    }
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+    });
+    
+    console.log(((await imageFile.bytes()).byteLength) / 100000);
+
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+    const imageBase64 = buffer.toString('base64');
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: imageBase64,
+          mimeType: imageFile.type
+        }
+      },
+      prompt
+    ]);
+
+    return result.response.text();
+  } catch (error) {
+    console.error('Error:', error);
+    throw new Error('Error al procesar la imagen');
+  }
+}
