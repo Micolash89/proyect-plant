@@ -76,3 +76,37 @@ import { GoogleAIFileManager } from '@google/generative-ai/server';
   }
   
   run();
+
+  /*importar archivos locales en base de 64*/
+
+import fs from "fs"; // Para leer archivos locales
+
+
+
+if (!apiKey) {
+  throw new Error("GEMINI_API_KEY is not set in the environment variables.");
+}
+
+
+async function runIa2() {
+  const imagePath = "path/to/your/image.jpg"; // Reemplaza con la ruta real a tu imagen
+
+  // Convierte el archivo de imagen local a Base64
+  const imageBase64 = Buffer.from(fs.readFileSync(imagePath)).toString("base64");
+
+  const prompt = "puedes analizar esta imagen?"; // Tu prompt
+
+  const result = await model.generateContent([
+    {
+      inlineData: {
+        data: imageBase64,
+        mimeType: "image/jpeg", // O el tipo MIME correcto de tu imagen
+      },
+    },
+    prompt,
+  ]);
+
+  console.log(result.response.text());
+}
+
+runIa2();
